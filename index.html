@@ -741,8 +741,16 @@
                 : ['P1 (Home)', 'P2 (Category)', 'P3 (Trap)', 'P4 (PDF)', 'P5 (Trap)'];
             const data = prState.pi.map(x => (x * 100).toFixed(2));
 
+            const chartCanvas = document.getElementById('chartLabPR');
+            if (!chartCanvas) return;
+            if (typeof Chart === 'undefined') {
+                const chartContainer = chartCanvas.parentElement;
+                chartContainer.innerHTML = '<div class="h-full flex items-center justify-center text-center text-xs text-amber-700 bg-amber-50 rounded-xl p-4">Không tải được thư viện biểu đồ. Hãy tải lại trang hoặc kiểm tra kết nối mạng.</div>';
+                return;
+            }
+
             if (!chartLab) {
-                const ctx = document.getElementById('chartLabPR').getContext('2d');
+                const ctx = chartCanvas.getContext('2d');
                 chartLab = new Chart(ctx, {
                     type: 'bar',
                     data: {
@@ -780,6 +788,82 @@
             } else {
                 alertEl.className = "p-4 rounded-xl text-xs leading-relaxed font-medium bg-blue-50 border border-blue-200 text-blue-900";
                 alertEl.innerHTML = `<strong>✓ LIÊN THÔNG MẠNH:</strong> Không có bẫy liên kết, Trang chủ A dẫn đầu với <strong>${(prState.pi[0]*100).toFixed(2)}%</strong> sau ${prState.step} bước lặp.`;
+            }
+        }
+
+        // Run the project's NumPy calculations in the browser without a server-side Python runtime.
+        function clearTerminal() {
+            document.getElementById('python-stdout').textContent = '';
+        }
+
+        let pyodidePromise = null;
+        async function executePythonInBrowser() {
+            const button = document.getElementById('btn-run-pyodide');
+            const buttonText = document.getElementById('btn-run-text');
+            const buttonIcon = document.getElementById('btn-run-icon');
+            const output = document.getElementById('python-stdout');
+
+            if (!window.loadPyodide) {
+                output.textContent = 'Không tải được Pyodide từ CDN. Hãy kiểm tra kết nối mạng rồi tải lại trang.';
+                return;
+            }
+
+            button.disabled = true;
+            button.classList.add('opacity-60', 'cursor-wait');
+            buttonIcon.textContent = '⏳';
+            buttonText.textContent = 'Đang khởi động Python...';
+            output.textContent = 'Đang tải môi trường Python và NumPy, vui lòng chờ lần đầu...';
+
+            try {
+                if (!pyodidePromise) pyodidePromise = loadPyodide();
+                const pyodide = await pyodidePromise;
+                await pyodide.loadPackage('numpy');
+
+                const sourceUrls = [
+                    'btl_dstt_svd_pagerank.py',
+                    'https://raw.githubusercontent.com/MinhQuangNguyen321/pagerank-paper/main/btl_dstt_svd_pagerank.py'
+                ];
+                let source = null;
+                for (const url of sourceUrls) {
+                    try {
+                        const response = await fetch(url);
+                        if (response.ok) {
+                            source = await response.text();
+                            break;
+                        }
+                    } catch (error) {
+                        // The public URL supports pages opened directly from file://.
+                    }
+                }
+                if (!source) throw new Error('Không thể tải btl_dstt_svd_pagerank.py.');
+
+                const plottingMarker = '# PHẦN 3: VẼ ĐỒ THỊ TRỰC QUAN HÓA BẰNG MATPLOTLIB';
+                source = source.replace(/^import matplotlib\.pyplot as plt\r?\n/m, '');
+                source = source.slice(0, source.indexOf(plottingMarker));
+                source += `
+
+svd_res = run_recommender_svd()
+pr_res = run_pagerank_examples()
+print("\\nHoàn tất thực thi các phép tính SVD và PageRank trên trình duyệt!")
+`;
+
+                pyodide.setStdout({
+                    batched: text => {
+                        output.textContent += text;
+                        output.scrollTop = output.scrollHeight;
+                    }
+                });
+                output.textContent = '';
+                await pyodide.runPythonAsync(source);
+                buttonText.textContent = 'Chạy lại Code Python';
+                buttonIcon.textContent = '✓';
+            } catch (error) {
+                output.textContent = `Lỗi khi chạy Python:\n${error.message || error}`;
+                buttonText.textContent = 'Thử chạy lại';
+                buttonIcon.textContent = '▶';
+            } finally {
+                button.disabled = false;
+                button.classList.remove('opacity-60', 'cursor-wait');
             }
         }
 

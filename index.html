@@ -6,6 +6,7 @@
     <title>Giáo Trình Trực Quan: SVD & Google PageRank | ĐH Bách Khoa TP.HCM</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- KaTeX CDN for Math Rendering -->
@@ -37,6 +38,9 @@
 
             <!-- Quick Action Links & GitHub Button -->
             <div class="flex items-center gap-3">
+                <a href="#python-runner-section" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-300 hover:text-white bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-500/40 px-3 py-2 rounded-lg transition shadow-sm">
+                    <span>▶</span> Chạy Code Python
+                </a>
                 <a href="#lab-section" class="hidden md:inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg border border-slate-700 transition">
                     <span>🎛️</span> Phòng Lab Tương Tác
                 </a>
@@ -70,6 +74,9 @@
                 Giáo trình điện tử minh họa sinh động dành cho người học: giải thích từ trực giác bình dân đời thường, ví dụ số học chi tiết, đối chiếu chuẩn xác từng công thức toán học, kèm phòng thí nghiệm tương tác mô phỏng thời gian thực!
             </p>
             <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <a href="#python-runner-section" class="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/25 transition transform hover:-translate-y-0.5 flex items-center gap-2">
+                    <span>▶</span> Bấm vào đây để chạy code Python
+                </a>
                 <a href="#lab-section" class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-2">
                     <span>🎛️</span> Vào Phòng Thí Nghiệm Trực Quan
                 </a>
@@ -117,6 +124,53 @@
                 <!-- =============================================================== -->
                 <!-- PHÒNG THÍ NGHIỆM TƯƠNG TÁC (LAB SECTION) -->
                 <!-- =============================================================== -->
+                
+                <!-- =============================================================== -->
+                <!-- TRÌNH CHẠY CODE PYTHON TRỰC TUYẾN (PYTHON RUNNER) -->
+                <!-- =============================================================== -->
+                <section id="python-runner-section" class="lesson-card bg-slate-900 text-white p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-800 gap-4">
+                        <div>
+                            <div class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">
+                                <span>🐍</span> Môi Trường Thực Thi Python Trực Tuyến
+                            </div>
+                            <h2 class="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+                                Bấm Vào Đây Để Chạy Code Python Trong Bài
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-1">Chạy mã nguồn thực tế btl_dstt_svd_pagerank.py với NumPy ngay trên trình duyệt hoặc Google Colab!</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <a href="https://colab.research.google.com/github/MinhQuangNguyen321/pagerank-paper/blob/main/btl_dstt_svd_pagerank.ipynb" target="_blank" rel="noopener noreferrer"
+                               class="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold px-3.5 py-2.5 rounded-xl shadow-lg transition transform hover:-translate-y-0.5">
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M16.941 4.977a7.034 7.034 0 0 0-4.931 2.06 7.038 7.038 0 0 0-4.931-2.06 7.042 7.042 0 0 0-7.04 7.043c0 3.88 3.161 7.042 7.04 7.042 1.895 0 3.636-.755 4.931-2.06a7.034 7.034 0 0 0 4.931 2.06c3.879 0 7.04-3.162 7.04-7.042s-3.161-7.043-7.04-7.043z"/></svg>
+                                <span>Chạy trên Google Colab</span>
+                                <span class="text-xs">↗</span>
+                            </a>
+                            <button id="btn-run-pyodide" onclick="executePythonInBrowser()"
+                                    class="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 text-xs font-black px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-500/25 transition transform hover:-translate-y-0.5">
+                                <span id="btn-run-icon">▶</span> <span id="btn-run-text">Chạy Code Trực Tiếp (WebAssembly)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Live Terminal Output -->
+                    <div class="bg-black/90 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl font-mono">
+                        <div class="bg-slate-800/90 px-4 py-2.5 flex items-center justify-between text-xs text-slate-400 border-b border-slate-700/50">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 rounded-full bg-rose-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                                <span class="ml-2 text-slate-300 font-bold text-[11px]">bash ~ python btl_dstt_svd_pagerank.py</span>
+                            </div>
+                            <button onclick="clearTerminal()" class="hover:text-white text-[11px] bg-slate-700/60 hover:bg-slate-700 px-2.5 py-1 rounded transition">Clear</button>
+                        </div>
+                        <pre id="python-stdout" class="p-4 text-xs text-emerald-400 font-mono overflow-x-auto max-h-[420px] min-h-[180px] whitespace-pre leading-relaxed select-text">
+👉 Bấm nút xanh [▶ Chạy Code Trực Tiếp (WebAssembly)] ở trên để thực thi code Python ngay trong trình duyệt của bạn!
+(Hoặc bấm nút vàng [Chạy trên Google Colab] để mở trong môi trường Jupyter đám mây).
+                        </pre>
+                    </div>
+                </section>
+
                 <section id="lab-section" class="lesson-card bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-md space-y-6">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
                         <div>

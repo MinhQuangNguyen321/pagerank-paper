@@ -1,7 +1,17 @@
 <div align="center">
 
 # 🌐 TRẢI NGHIỆM BÀI GIẢNG TƯƠNG TÁC TRỰC TUYẾN
-### 👉 [BẤM VÀO ĐÂY ĐỂ VÀO HỌC NGAY TRÊN TRÌNH DUYỆT](https://minhquangnguyen321.github.io/pagerank-paper/) 👈
+### 👉 [BẤM VÀO ĐÂY ĐỂ VÀO HỌC BÀI GIẢNG TRỰC TUYẾN](https://minhquangnguyen321.github.io/pagerank-paper/) 👈
+
+<div style="margin: 12px 0;">
+  <a href="https://minhquangnguyen321.github.io/pagerank-paper/#python-runner-section">
+    <img src="https://img.shields.io/badge/▶_BẤM_VÀO_ĐÂY_ĐỂ_CHẠY_CODE_PYTHON-TRỰC_TIẾP_TRÊN_TRÌNH_DUYỆT-emerald?style=for-the-badge&logo=python&logoColor=white" alt="Run Python In Browser">
+  </a>
+  &nbsp;
+  <a href="https://colab.research.google.com/github/MinhQuangNguyen321/pagerank-paper/blob/main/btl_dstt_svd_pagerank.ipynb" target="_blank">
+    <img src="https://img.shields.io/badge/⚡_CHẠY_TRÊN_GOOGLE_COLAB-(1--CLICK_RUN)-amber?style=for-the-badge&logo=googlecolab&logoColor=white" alt="Open in Colab">
+  </a>
+</div>
 
 > 💡 *Trang web bài giảng trực tuyến gồm đầy đủ 12 bài học minh họa, KaTeX hiển thị công thức đẹp mắt, phòng thí nghiệm kéo thanh trượt mô phỏng thuật toán thời gian thực, và **nút bấm [Quay về Source Code]** luôn sẵn sàng ở góc trên cùng!*
 

@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giáo Trình Trực Quan: SVD & Google PageRank | ĐH Bách Khoa TP.HCM</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- KaTeX CDN for Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+        .lesson-card { scroll-margin-top: 5.5rem; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+
+    <!-- Top Floating Header -->
+    <header class="bg-slate-900/95 backdrop-blur-md text-white sticky top-0 z-50 border-b border-slate-800 shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">📐</span>
+                <div>
+                    <a href="#" class="font-extrabold text-base sm:text-lg tracking-tight hover:text-blue-400 transition flex items-center gap-2">
+                        Đại Số Tuyến Tính Ứng Dụng
+                        <span class="hidden sm:inline-block text-[11px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full">Bách Khoa TP.HCM</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Action Links & GitHub Button -->
+            <div class="flex items-center gap-3">
+                <a href="#lab-section" class="hidden md:inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg border border-slate-700 transition">
+                    <span>🎛️</span> Phòng Lab Tương Tác
+                </a>
+                <a href="#lessons-start" class="hidden md:inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg border border-slate-700 transition">
+                    <span>📚</span> 12 Bài Học
+                </a>
+                <!-- PROMINENT BUTTON: RETURN TO GITHUB SOURCE CODE -->
+                <a href="https://github.com/MinhQuangNguyen321/pagerank-paper" target="_blank" rel="noopener noreferrer" 
+                   class="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-3.5 sm:px-4 py-2 rounded-xl shadow-lg shadow-blue-500/25 transition transform hover:-translate-y-0.5 border border-blue-400/30">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                    </svg>
+                    <span>Quay về Source Code</span>
+                    <span class="text-xs">↗</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Banner -->
+    <div class="relative overflow-hidden bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white py-14 sm:py-20 border-b border-slate-800">
+        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        <div class="max-w-5xl mx-auto px-4 text-center relative z-10 space-y-6">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-semibold">
+                <span>🎓</span> Báo Cáo Bài Tập Lớn • Học kỳ 1 Năm học 2026 – 2027
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
+                Phân tích <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-300">SVD</span> trong Hệ Gợi Ý & Thuật Toán <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300">Google PageRank</span>
+            </h1>
+            <p class="max-w-3xl mx-auto text-slate-300 text-sm sm:text-base leading-relaxed">
+                Giáo trình điện tử minh họa sinh động dành cho người học: giải thích từ trực giác bình dân đời thường, ví dụ số học chi tiết, đối chiếu chuẩn xác từng công thức toán học, kèm phòng thí nghiệm tương tác mô phỏng thời gian thực!
+            </p>
+            <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <a href="#lab-section" class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-2">
+                    <span>🎛️</span> Vào Phòng Thí Nghiệm Trực Quan
+                </a>
+                <a href="#lessons-start" class="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-sm transition flex items-center gap-2">
+                    <span>📖</span> Bắt Đầu Học Bài 1
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Container with Sticky Sidebar -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <!-- LEFT SIDEBAR: LESSONS NAVIGATION (Desktop Sticky) -->
+            <aside class="hidden lg:block lg:col-span-3">
+                <div class="sticky top-24 space-y-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm max-h-[85vh] overflow-y-auto">
+                    <div class="text-xs font-extrabold text-slate-400 uppercase tracking-wider px-2">Mục Lục Giáo Trình</div>
+                    <nav class="space-y-1 text-xs">
+                        <a href="#lab-section" class="flex items-center gap-2 px-2.5 py-2 rounded-lg font-bold text-blue-600 hover:bg-blue-50 transition">
+                            <span>🎛️</span> Phòng Lab Tương Tác
+                        </a>
+                        <div class="pt-2 pb-1 border-t border-slate-100 text-[11px] font-bold text-slate-400 px-2 uppercase">Phần 1: Hệ Gợi Ý SVD</div>
+                        <a href="#lesson-1" class="block px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">Bài 1: Ma trận & Độ thưa dữ liệu</a>
+                        <a href="#lesson-2" class="block px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">Bài 2: Phân tích SVD & Không gian ẩn</a>
+                        <a href="#lesson-3" class="block px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">Bài 3: Định lý Eckart–Young</a>
+                        <a href="#lesson-4" class="block px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">Bài 4: FunkSVD (Netflix Prize)</a>
+                        <a href="#lesson-5" class="block px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">Bài 5: Thực hành ma trận 5x5</a>
+                        <div class="pt-2 pb-1 border-t border-slate-100 text-[11px] font-bold text-slate-400 px-2 uppercase">Phần 2: Google PageRank</div>
+                        <a href="#lesson-6" class="block px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">Bài 6: Bản chất PageRank</a>
+                        <a href="#lesson-7" class="block px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">Bài 7: Nút cụt (Dangling Nodes)</a>
+                        <a href="#lesson-8" class="block px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">Bài 8: Bẫy liên kết (Spider Traps)</a>
+                        <a href="#lesson-9" class="block px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">Bài 9: Perron–Frobenius & Power Iteration</a>
+                        <a href="#lesson-10" class="block px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">Bài 10: Hai ví dụ thực nghiệm</a>
+                        <div class="pt-2 pb-1 border-t border-slate-100 text-[11px] font-bold text-slate-400 px-2 uppercase">Phần 3: Đánh Giá Web</div>
+                        <a href="#lesson-11" class="block px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">Bài 11: So sánh PageRank vs HITS</a>
+                        <a href="#lesson-12" class="block px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">Bài 12: Core Web Vitals & Lighthouse</a>
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- RIGHT COLUMN: MAIN CONTENT (LAB + LESSONS) -->
+            <main class="lg:col-span-9 space-y-12">
+
+                <!-- =============================================================== -->
+                <!-- PHÒNG THÍ NGHIỆM TƯƠNG TÁC (LAB SECTION) -->
+                <!-- =============================================================== -->
+                <section id="lab-section" class="lesson-card bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-md space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+                        <div>
+                            <div class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">
+                                <span>⚡</span> Phòng Thực Nghiệm Ảo
+                            </div>
+                            <h2 class="text-xl sm:text-2xl font-black text-slate-900">Mô Phỏng Thuật Toán Tương Tác Trực Tiếp</h2>
+                        </div>
+                        <!-- Mini Tabs -->
+                        <div class="inline-flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                            <button onclick="setLabTab('pagerank')" id="btn-lab-pr" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white shadow">🌐 PageRank</button>
+                            <button onclick="setLabTab('svd')" id="btn-lab-svd" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">🎬 SVD Gợi Ý</button>
+                            <button onclick="setLabTab('vitals')" id="btn-lab-vitals" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">🚦 Lighthouse</button>
+                        </div>
+                    </div>
+
+                    <!-- SUB-TAB 1: PAGERANK LAB -->
+                    <div id="lab-content-pagerank" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Chọn Mô Hình</label>
+                                <select id="lab-pr-select" onchange="runLabPageRank()" class="w-full bg-white border border-slate-300 text-slate-800 text-xs font-semibold rounded-lg px-3 py-2">
+                                    <option value="ex1">Ví dụ 1: 4 trang liên thông mạnh (A, B, C, D)</option>
+                                    <option value="ex2" selected>Ví dụ 2: 5 trang có Nút cụt P4 & Bẫy {P3, P5}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-center text-xs font-bold mb-1">
+                                    <span class="text-slate-500 uppercase">Hệ số Damping (d)</span>
+                                    <span id="lab-pr-d-text" class="text-blue-600 font-mono">0.85</span>
+                                </div>
+                                <input type="range" id="lab-pr-d" min="0" max="1" step="0.01" value="0.85" oninput="updateLabD(this.value)" class="w-full accent-blue-600">
+                                <div class="flex justify-between text-[10px] text-slate-400 mt-0.5">
+                                    <span>d=0 (Nhảy đều)</span>
+                                    <span class="font-bold text-blue-600">d=0.85 (Chuẩn Google)</span>
+                                    <span class="text-red-500 font-bold">d=1.0 (Dính bẫy)</span>
+                                </div>
+                            </div>
+                            <div class="flex items-end gap-2">
+                                <button onclick="stepLabPR()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs py-2 px-3 rounded-lg transition">Bước (+1)</button>
+                                <button onclick="runAllLabPR()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-3 rounded-lg transition shadow">Lặp hết</button>
+                                <button onclick="resetLabPR()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs py-2 px-2.5 rounded-lg transition">↺</button>
+                            </div>
+                        </div>
+
+                        <!-- Chart Canvas -->
+                        <div class="h-64 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                            <canvas id="chartLabPR"></canvas>
+                        </div>
+
+                        <!-- Live Diagnosis Alert -->
+                        <div id="lab-pr-alert" class="p-4 rounded-xl text-xs leading-relaxed font-medium"></div>
+                    </div>
+
+                    <!-- SUB-TAB 2: SVD RECOMMENDER LAB -->
+                    <div id="lab-content-svd" class="hidden space-y-6">
+                        <div class="flex items-center justify-between bg-purple-50 p-4 rounded-2xl border border-purple-200">
+                            <div>
+                                <h4 class="font-bold text-purple-900 text-sm">Thực Nghiệm Xấp Xỉ Hạng Thấp Eckart–Young</h4>
+                                <p class="text-xs text-purple-700">Chuyển đổi số chiều ẩn k để xem hệ thống dự đoán điểm tại 3 ô khuyết:</p>
+                            </div>
+                            <div class="inline-flex rounded-lg border border-purple-300 p-1 bg-white">
+                                <button onclick="switchLabK(1)" id="lab-k1-btn" class="px-3 py-1 rounded text-xs font-bold bg-purple-600 text-white">k = 1</button>
+                                <button onclick="switchLabK(2)" id="lab-k2-btn" class="px-3 py-1 rounded text-xs font-bold text-slate-600">k = 2</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-xs text-slate-700">Cặp (U₅, I₃) [Sci-Fi]</span>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-green-100 text-green-700">🟢 GỢI Ý</span>
+                                </div>
+                                <div class="text-[11px] text-slate-500">Khách mê Sci-Fi, phim bom tấn Sci-Fi.</div>
+                                <div class="text-xs font-mono pt-1 border-t border-slate-200 space-y-1">
+                                    <div class="flex justify-between"><span>SVD (<span id="txt-k-val1">k=1</span>):</span><span class="font-bold text-purple-700" id="res-u5-svd">3.93 ★</span></div>
+                                    <div class="flex justify-between"><span>FunkSVD:</span><span class="font-bold text-indigo-700">5.16 ★</span></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-xs text-slate-700">Cặp (U₄, I₂) [Sci-Fi]</span>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">🔴 TỪ CHỐI</span>
+                                </div>
+                                <div class="text-[11px] text-slate-500">Khách thích Drama, ghét Sci-Fi.</div>
+                                <div class="text-xs font-mono pt-1 border-t border-slate-200 space-y-1">
+                                    <div class="flex justify-between"><span>SVD (<span id="txt-k-val2">k=1</span>):</span><span class="font-bold text-purple-700" id="res-u4-svd">2.32 ★</span></div>
+                                    <div class="flex justify-between"><span>FunkSVD:</span><span class="font-bold text-indigo-700">0.66 ★</span></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-xs text-slate-700">Cặp (U₁, I₅) [Drama]</span>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">🔴 TỪ CHỐI</span>
+                                </div>
+                                <div class="text-[11px] text-slate-500">Khách mê Sci-Fi, phim tình cảm Drama.</div>
+                                <div class="text-xs font-mono pt-1 border-t border-slate-200 space-y-1">
+                                    <div class="flex justify-between"><span>SVD (<span id="txt-k-val3">k=1</span>):</span><span class="font-bold text-purple-700" id="res-u1-svd">2.52 ★</span></div>
+                                    <div class="flex justify-between"><span>FunkSVD:</span><span class="font-bold text-indigo-700">1.90 ★</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUB-TAB 3: LIGHTHOUSE CALCULATOR -->
+                    <div id="lab-content-vitals" class="hidden space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                            <div class="md:col-span-8 space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-xs font-bold mb-1">
+                                        <span>Total Blocking Time (TBT - 30%)</span>
+                                        <span id="lb-tbt-txt" class="font-mono text-emerald-600">150 ms</span>
+                                    </div>
+                                    <input type="range" id="lb-tbt" min="0" max="800" value="150" oninput="calcLabLighthouse()" class="w-full accent-emerald-600">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs font-bold mb-1">
+                                        <span>Largest Contentful Paint (LCP - 25%)</span>
+                                        <span id="lb-lcp-txt" class="font-mono text-emerald-600">2.0 s</span>
+                                    </div>
+                                    <input type="range" id="lb-lcp" min="0.5" max="6.0" step="0.1" value="2.0" oninput="calcLabLighthouse()" class="w-full accent-emerald-600">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs font-bold mb-1">
+                                        <span>Cumulative Layout Shift (CLS - 25%)</span>
+                                        <span id="lb-cls-txt" class="font-mono text-emerald-600">0.05</span>
+                                    </div>
+                                    <input type="range" id="lb-cls" min="0" max="0.5" step="0.01" value="0.05" oninput="calcLabLighthouse()" class="w-full accent-emerald-600">
+                                </div>
+                            </div>
+                            <div class="md:col-span-4 bg-slate-50 p-6 rounded-2xl border border-slate-200 text-center space-y-2">
+                                <div class="text-xs font-bold text-slate-400 uppercase">Điểm Hiệu Năng</div>
+                                <div id="lb-score-num" class="text-5xl font-black text-emerald-600 font-mono">92</div>
+                                <div id="lb-badge" class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">✓ ĐẠT CHUẨN GOOGLE</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div id="lessons-start" class="pt-4"></div>
+
+                <!-- =============================================================== -->
+                <!-- 12 BÀI HỌC GIÁO TRÌNH (CHUẨN SƯ PHẠM 4 BƯỚC) -->
+                <!-- =============================================================== -->
+
+                <!-- BÀI 1 -->
+                <article id="lesson-1" class="lesson-card bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 font-black flex items-center justify-center text-sm">01</span>
+                        <h3 class="text-xl font-bold text-slate-900">Ma Trận Đánh Giá Người Dùng & Độ Thưa Dữ Liệu</h3>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-slate-400 text-xs sm:text-sm text-slate-700 space-y-1">
+                        <div class="font-bold text-slate-500 uppercase text-[11px]">1. 📌 Khái niệm học thuật trong báo cáo</div>
+                        <p>Nghiên cứu cấu trúc phân rã ma trận đánh giá Người dùng – Sản phẩm $R \in \mathbb{R}^{m \times n}$ có độ thưa dữ liệu rất lớn (thường trên 99%) về không gian nhân tố ẩn có số chiều thấp $k \ll \min(m, n)$ nhằm khử nhiễu và dự đoán điểm đánh giá tại các ô bị khuyết.</p>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 rounded-2xl border-l-4 border-blue-500 text-xs sm:text-sm text-blue-950 space-y-1">
+                        <div class="font-bold text-blue-600 uppercase text-[11px]">2. 💡 Giảng giải bình dân (Ai nghe cũng hiểu)</div>
+                        <p>Hãy tưởng tượng bảng tính Netflix: Hàng là người dùng (hàng triệu người), Cột là phim (hàng trăm ngàn phim). Bạn chỉ chấm được 20–30 phim trong đời, còn 99% ô còn lại đều <strong>trống trơn</strong>. Ma trận như vậy gọi là <em>Ma trận thưa</em>. Nhiệm vụ của hệ thống là: Đoán mò số sao tại các ô trống đó một cách thông minh nhất!</p>
+                    </div>
+
+                    <div class="p-4 bg-amber-50/70 rounded-2xl border-l-4 border-amber-500 text-xs sm:text-sm text-amber-950 space-y-1">
+                        <div class="font-bold text-amber-700 uppercase text-[11px]">3. 🎬 Ví dụ cụ thể</div>
+                        <p>Bạn thích xem phim siêu anh hùng (Avengers 5★, Batman 5★), ghét phim sến (Titanic 1★). Phim Captain America bạn chưa xem (ô trống ?). Không cần chờ bạn xem xong, ai cũng đoán chắc nịch bạn sẽ chấm Captain America 5 sao!</p>
+                    </div>
+
+                    <div class="p-4 bg-emerald-50/70 rounded-2xl border-l-4 border-emerald-500 text-xs sm:text-sm text-emerald-950 space-y-1">
+                        <div class="font-bold text-emerald-700 uppercase text-[11px]">4. 📖 "Bởi vậy báo cáo đã ghi..."</div>
+                        <p>Bởi vậy báo cáo đã xây dựng ma trận đánh giá 5 người dùng $\times$ 5 phim, trong đó các ô khuyết được gán tạm bằng 0: $U_1$ khuyết phim $I_5$, $U_4$ khuyết phim $I_2$, và $U_5$ khuyết phim $I_3$ để làm đề tài thực nghiệm cho thuật toán!</p>
+                    </div>
+                </article>
+
+                <!-- BÀI 2 -->
+                <article id="lesson-2" class="lesson-card bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 font-black flex items-center justify-center text-sm">02</span>
+                        <h3 class="text-xl font-bold text-slate-900">Phép Phân Tích Giá Trị Kỳ Dị (SVD) & Không Gian Ẩn</h3>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-slate-400 text-xs sm:text-sm text-slate-700 space-y-1">
+                        <div class="font-bold text-slate-500 uppercase text-[11px]">1. 📌 Khái niệm học thuật trong báo cáo</div>
+                        <p>Mọi ma trận thực $A \in \mathbb{R}^{m \times n}$ đều có thể phân tích thành tích 3 ma trận: $A = U \Sigma V^T = \sum_{j=1}^r \sigma_j u_j v_j^T$, trong đó $U$ và $V$ là các ma trận trực giao, còn $\Sigma$ chứa các giá trị kỳ dị giảm dần $\sigma_1 \ge \sigma_2 \ge \dots > 0$.</p>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 rounded-2xl border-l-4 border-blue-500 text-xs sm:text-sm text-blue-950 space-y-1">
+                        <div class="font-bold text-blue-600 uppercase text-[11px]">2. 💡 Giảng giải bình dân (Ai nghe cũng hiểu)</div>
+                        <p>SVD giống như một <strong>chiếc lăng kính tán sắc</strong>: Bề ngoài người dùng chấm điểm cho hàng ngàn phim cụ thể, nhưng trong não họ chỉ quyết định dựa trên vài <em>tiêu chí ngầm</em> (Hành động? Tình cảm? Kỹ xảo?). SVD tách bảng điểm thô thành: $U$ (độ mê từng tiêu chí của người dùng), $V$ (chất lượng từng tiêu chí của bộ phim), và $\Sigma$ (tiêu chí nào quan trọng nhất trên thị trường).</p>
+                    </div>
+
+                    <div class="p-4 bg-amber-50/70 rounded-2xl border-l-4 border-amber-500 text-xs sm:text-sm text-amber-950 space-y-1">
+                        <div class="font-bold text-amber-700 uppercase text-[11px]">3. 🎬 Ví dụ cụ thể</div>
+                        <p>Anh Nam có độ mê phim hành động là $+0.9$. Phim John Wick có chất hành động là $+0.95$. Nhân hai số lại với nhau ra một giá trị rất lớn $\to$ Nam chắc chắn cho John Wick điểm tối đa!</p>
+                    </div>
+
+                    <div class="p-4 bg-emerald-50/70 rounded-2xl border-l-4 border-emerald-500 text-xs sm:text-sm text-emerald-950 space-y-1">
+                        <div class="font-bold text-emerald-700 uppercase text-[11px]">4. 📖 "Bởi vậy báo cáo đã ghi..."</div>
+                        <p>Bởi vậy báo cáo đã tính ra: $\sigma_1 = 6.7324$ chiếm tới $82.79\%$ năng lượng ma trận! Hai giá trị đầu cộng lại $(\sigma_1, \sigma_2)$ chiếm tới $92.86\%$ năng lượng, chứng minh chỉ cần 2 thể loại phim (Hành động & Tình cảm) là đủ giải thích hơn 92% hành vi của người dùng!</p>
+                    </div>
+                </article>
+
+                <!-- BÀI 3 -->
+                <article id="lesson-3" class="lesson-card bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 font-black flex items-center justify-center text-sm">03</span>
+                        <h3 class="text-xl font-bold text-slate-900">Định Lý Eckart–Young & Chiếc Kính Lọc Khử Nhiễu</h3>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-slate-400 text-xs sm:text-sm text-slate-700 space-y-1">
+                        <div class="font-bold text-slate-500 uppercase text-[11px]">1. 📌 Khái niệm học thuật trong báo cáo</div>
+                        <p>Định lý Xấp xỉ Hạng thấp Eckart–Young (1936): Ma trận hạng $k$ xấp xỉ tốt nhất cho $A$ theo cả chuẩn Frobenius lẫn chuẩn L2 chính là Truncated SVD: $A_k = \sum_{j=1}^k \sigma_j u_j v_j^T$, với sai số cực tiểu bằng tổng bình phương các giá trị kỳ dị bị loại bỏ.</p>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 rounded-2xl border-l-4 border-blue-500 text-xs sm:text-sm text-blue-950 space-y-1">
+                        <div class="font-bold text-blue-600 uppercase text-[11px]">2. 💡 Giảng giải bình dân (Ai nghe cũng hiểu)</div>
+                        <p>Khi chụp ảnh có muỗi nhiễu, bạn dùng bộ lọc làm mịn để xóa hạt bụi mà vẫn giữ rõ khuôn mặt. Định lý Eckart–Young bảo đảm rằng: Vứt bỏ các giá trị kỳ dị nhỏ ở đuôi $(\sigma_3, \sigma_4, \dots)$ không làm mất dữ liệu, mà ngược lại vừa <strong>nén dữ liệu gọn lại</strong> vừa <strong>quét sạch nhiễu chấm bừa</strong> ra khỏi hệ thống!</p>
+                    </div>
+
+                    <div class="p-4 bg-amber-50/70 rounded-2xl border-l-4 border-amber-500 text-xs sm:text-sm text-amber-950 space-y-1">
+                        <div class="font-bold text-amber-700 uppercase text-[11px]">3. 🎬 Ví dụ cụ thể</div>
+                        <p>Bạn nhìn một người cách 50m: Bạn không cần nhìn rõ từng sợi lông mi hay nốt ruồi ($\sigma_4, \sigma_5$). Bạn chỉ cần nhìn vóc dáng và mái tóc ($k=2$ thành phần đầu $\sigma_1, \sigma_2$) là nhận diện chính xác đứa bạn thân!</p>
+                    </div>
+
+                    <div class="p-4 bg-emerald-50/70 rounded-2xl border-l-4 border-emerald-500 text-xs sm:text-sm text-emerald-950 space-y-1">
+                        <div class="font-bold text-emerald-700 uppercase text-[11px]">4. 📖 "Bởi vậy báo cáo đã ghi..."</div>
+                        <p>Bởi vậy báo cáo đã lập trình công thức nén ma trận với $k=1$ và $k=2$: $A_{k2} = U(:, 1:2) \cdot \Sigma(1:2, 1:2) \cdot V(:, 1:2)^T$, loại bỏ các yếu tố ngẫu nhiên để dự đoán điểm chính xác hơn.</p>
+                    </div>
+                </article>
+
+                <!-- BÀI 4 -->
+                <article id="lesson-4" class="lesson-card bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 font-black flex items-center justify-center text-sm">04</span>
+                        <h3 class="text-xl font-bold text-slate-900">Từ Truncated SVD Đến FunkSVD (Giải Thưởng Netflix 1 Triệu USD)</h3>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-slate-400 text-xs sm:text-sm text-slate-700 space-y-1">
+                        <div class="font-bold text-slate-500 uppercase text-[11px]">1. 📌 Khái niệm học thuật trong báo cáo</div>
+                        <p>Simon Funk (2006) đề xuất Regularized Matrix Factorization (FunkSVD): tối ưu hóa hàm mục tiêu có điều chuẩn L2 chỉ trên tập các ô thực sự đã được quan sát thông qua giải thuật Stochastic Gradient Descent (SGD).</p>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 rounded-2xl border-l-4 border-blue-500 text-xs sm:text-sm text-blue-950 space-y-1">
+                        <div class="font-bold text-blue-600 uppercase text-[11px]">2. 💡 Giảng giải bình dân (Ai nghe cũng hiểu)</div>
+                        <p>SVD cổ điển bắt buộc phải "điền trước số trung bình" vào các ô trống, vô tình tạo ra <em>bằng chứng giả</em> ép máy tính học theo. Simon Funk phát kiến: <strong>Kệ các ô trống, không điền gì cả! Chỉ bắt máy học từ những ô người ta đã chấm thật</strong> bằng thuật toán điều chỉnh sai số từng bước (SGD)!</p>
+                    </div>
+
+                    <div class="p-4 bg-amber-50/70 rounded-2xl border-l-4 border-amber-500 text-xs sm:text-sm text-amber-950 space-y-1">
+                        <div class="font-bold text-amber-700 uppercase text-[11px]">3. 🎬 Ví dụ cụ thể</div>
+                        <p>Khách vào quán chỉ ăn Phở bò và Bún chả rồi khen ngon. Bạn không cần bịa rằng khách thích Bún đậu 3 điểm. Bạn chỉ cần học từ Phở bò và Bún chả để suy ra khách thích món thanh vị và sẽ thích Hủ tiếu!</p>
+                    </div>
+
+                    <div class="p-4 bg-emerald-50/70 rounded-2xl border-l-4 border-emerald-500 text-xs sm:text-sm text-emerald-950 space-y-1">
+                        <div class="font-bold text-emerald-700 uppercase text-[11px]">4. 📖 "Bởi vậy báo cáo đã ghi..."</div>
+                        <p>Bởi vậy báo cáo đã đối chứng trực tiếp: Tại ô $(U_1, I_5)$ (người ghét phim Drama), SVD cổ điển bị kéo điểm giả ra $3.74$ sao, trong khi FunkSVD đoán chuẩn xác $1.90$ sao phản ánh đúng thực tế!</p>
+                    </div>
+                </article>
+
+                <!-- BÀI 5 -->
+                <article id="lesson-5" class="lesson-card bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 font-black flex items-center justify-center text-sm">05</span>
+                        <h3 class="text-xl font-bold text-slate-900">Thực Hành Tính Toán SVD Trên Ma Trận 5 × 5</h3>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-slate-400 text-xs sm:text-sm text-slate-700 space-y-1">
+                        <div class="font-bold text-slate-500 uppercase text-[11px]">1. 📌 Khái niệm học thuật trong báo cáo</div>
+                        <p>Áp dụng quy trình 4 bước: Tính $\bar{r}_u$, điền khuyết tạm, chuẩn hóa tâm $A = R - \bar{r}_u$, phân rã SVD và tái tạo $\hat{R}_k = A_k + \bar{r}_u$ để đưa ra quyết định gợi ý nhị phân.</p>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 rounded-2xl border-l-4 border-blue-500 text-xs sm:text-sm text-blue-950 space-y-1">
+                        <div class="font-bold text-blue-600 uppercase text-[11px]">2. 💡 Giảng giải bình dân (Ai nghe cũng hiểu)</div>
+                        <p>Mỗi người có tính nết khác nhau: có người khó tính toàn chấm 1–2 sao, có người dễ dãi toàn cho 5 sao. Việc trừ điểm trung bình giúp máy tính hiểu: Người này khen là khen thật, hay do tính họ dễ dãi?</p>
+                    </div>
+
+                    <div class="p-4 bg-amber-50/70 rounded-2xl border-l-4 border-amber-500 text-xs sm:text-sm text-amber-950 space-y-1">
+                        <div class="font-bold text-amber-700 uppercase text-[11px]">3. 🎬 Ví dụ cụ thể</div>
+                        <p>Người dùng $U_5$ có điểm trung bình là 3.0 sao. Khi đoán phim Sci-Fi $I_3$, thuật toán cộng thêm điểm độ lệch dương rất lớn $\to$ Dự đoán nhảy vọt lên $3.94$ sao (SVD) và $5.16$ sao (FunkSVD)!</p>
+                    </div>
+
+                    <div class="p-4 bg-emerald-50/70 rounded-2xl border-l-4 border-emerald-500 text-xs sm:text-sm text-emerald-950 space-y-1">
+                        <div class="font-bold text-emerald-700 uppercase text-[11px]">4. 📖 "Bởi vậy báo cáo đã ghi..."</div>
+                        <p>Bởi vậy báo cáo kết luận dứt khoát: Hệ thống ra quyết định <strong>GỢI Ý ƯU TIÊN</strong> phim $I_3$ cho $U_5$ và <strong>TỪ CHỐI GỢI Ý</strong> phim $I_2$ cho $U_4$!</p>
+                    </div>
+                </article>
+
+                <!-- BÀI 6 -->
+                <article id="lesson-6" class="lesson-card bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-sm">06</span>
+                        <h3 class="text-xl font-bold text-slate-900">Bản Chất PageRank – Internet Là Cuộc Bầu Cử Dân Chủ</h3>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-slate-400 text-xs sm:text-sm text-slate-700 space-y-1">
+                        <div class="font-bold text-slate-500 uppercase text-[11px]">1. 📌 Khái niệm học thuật trong báo cáo</div>
+                        <p>Thuật toán PageRank: $\text{PR}(i) = \sum_{j \in B_i} \frac{\text{PR}(j)}{N_j} \iff \pi = H \pi$, với $H$ là ma trận siêu liên kết thô.</p>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 rounded-2xl border-l-4 border-blue-500 text-xs sm:text-sm text-blue-950 space-y-1">
+                        <div class="font-bold text-blue-600 uppercase text-[11px]">2. 💡 Giảng giải bình dân (Ai nghe cũng hiểu)</div>
+                        <p>Google không chấm điểm bằng cách đếm từ khóa. Google coi <strong>đường link là một lá phiếu bầu</strong>. Nhưng lá phiếu của người nổi tiếng (Báo Tuổi Trẻ, ĐH Bách Khoa) có giá trị gấp vạn lần lá phiếu của blog cá nhân vô danh!</p>
+                    </div>
+
+                    <div class="p-4 bg-amber-50/70 rounded-2xl border-l-4 border-amber-500 text-xs sm:text-sm text-amber-950 space-y-1">
+                        <div class="font-bold text-amber-700 uppercase text-[11px]">3. 🎬 Ví dụ cụ thể</div>
+                        <p>Một người bình thường khen bạn học giỏi, người khác bán tín bán nghi. Nhưng Giáo sư đầu ngành khen bạn học giỏi, bạn được trao học bổng ngay lập tức!</p>
+                    </div>
+
+                    <div class="p-4 bg-emerald-50/70 rounded-2xl border-l-4 border-emerald-500 text-xs sm:text-sm text-emerald-950 space-y-1">
+                        <div class="font-bold text-emerald-700 uppercase text-[11px]">4. 📖 "Bởi vậy báo cáo đã ghi..."</div>
+                        <p>Bởi vậy báo cáo đã thiết lập ma trận $H_1$ trong đó Trang $A$ nhận phiếu từ $C$ (100%) và $D$ (50%), giúp Trang chủ $A$ có điểm PageRank cao nhất mạng lưới!</p>
+                    </div>
+                </article>
+
+                <!-- BÀI 7 -->
+                <article id="lesson-7" class="lesson-card bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-sm">07</span>
+                        <h3 class="text-xl font-bold text-slate-900">Nút Cụt (Dangling Nodes) & Căn Bệnh Rò Rỉ Điểm Số</h3>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-slate-400 text-xs sm:text-sm text-slate-700 space-y-1">
+                        <div class="font-bold text-slate-500 uppercase text-[11px]">1. 📌 Khái niệm học thuật trong báo cáo</div>
+                        <p>Trang web không có liên kết đi ra ($N_j = 0$, tệp PDF) gây ra hiện tượng rò rỉ điểm số (Rank Leak: $\sum \pi_i^{(k)} \to 0$). Khắc phục bằng ma trận ngẫu nhiên cột: $S = H + \frac{1}{n} e a^T$.</p>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 rounded-2xl border-l-4 border-blue-500 text-xs sm:text-sm text-blue-950 space-y-1">
+                        <div class="font-bold text-blue-600 uppercase text-[11px]">2. 💡 Giảng giải bình dân (Ai nghe cũng hiểu)</div>
+                        <p>Người dùng click trúng một file PDF hoặc ảnh. File PDF không có nút bấm nào để đi tiếp $\to$ bị kẹt ở "ngõ cụt"! Điểm số bị đổ dồn vào đây sẽ bốc hơi biến mất như xô nước thủng đáy. Google chữa bằng cách: Quy ước ai gặp ngõ cụt sẽ bấm F5 nhảy ngẫu nhiên đến bất kỳ trang nào trên mạng với xác suất đều $1/n$!</p>
+                    </div>
+
+                    <div class="p-4 bg-amber-50/70 rounded-2xl border-l-4 border-amber-500 text-xs sm:text-sm text-amber-950 space-y-1">
+                        <div class="font-bold text-amber-700 uppercase text-[11px]">3. 🎬 Ví dụ cụ thể</div>
+                        <p>Bạn lái xe vào đường cụt. Bạn không ngồi đó mãi mà quay đầu xe ra đường lớn để đi tới một nơi bất kỳ trong thành phố.</p>
+                    </div>
+
+                    <div class="p-4 bg-emerald-50/70 rounded-2xl border-l-4 border-emerald-500 text-xs sm:text-sm text-emerald-950 space-y-1">
+                        <div class="font-bold text-emerald-700 uppercase text-[11px]">4. 📖 "Bởi vậy báo cáo đã ghi..."</div>
+                        <p>Bởi vậy báo cáo đã chứng minh: Nếu không vá cột 0 của $P_4$, tổng điểm toàn mạng rò rỉ từ $1.0 \to 0.8 \to 0.6$ sau 10 bước. Nhờ phép biến đổi sang $S_2$, tổng điểm luôn bảo toàn đúng bằng $1.0$!</p>
+                    </div>
+                </article>
+
+                <!-- BÀI 8 -->
+                <article id="lesson-8" class="lesson-card bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-sm">08</span>
+                        <h3 class="text-xl font-bold text-slate-900">Bẫy Liên Kết (Spider Traps) & Cú Nhảy Dịch Chuyển ($d = 0.85$)</h3>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-slate-400 text-xs sm:text-sm text-slate-700 space-y-1">
+                        <div class="font-bold text-slate-500 uppercase text-[11px]">1. 📌 Khái niệm học thuật trong báo cáo</div>
+                        <p>Bẫy liên kết (Spider Traps) hút sạch 100% điểm số khi $d = 1.0$. Phép Dịch chuyển tức thời (Teleportation) với hệ số $d = 0.85$ tạo nên Ma trận Google: $G = d S + \frac{1-d}{n} e e^T$ giúp triệt tiêu bẫy liên kết.</p>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 rounded-2xl border-l-4 border-blue-500 text-xs sm:text-sm text-blue-950 space-y-1">
+                        <div class="font-bold text-blue-600 uppercase text-[11px]">2. 💡 Giảng giải bình dân (Ai nghe cũng hiểu)</div>
+                        <p>Hai trang web nhốt người dùng: $P_3$ trỏ sang $P_5$, và $P_5$ trỏ lại $P_3$. Nó như một **hố đen vũ trụ hút sạch 100% điểm**, xóa sổ Trang chủ về 0! Cú đấm giải cứu của Google: 85% người dùng click theo link, nhưng 15% người dùng chán quá bèn <em>gõ thẳng URL mới trên trình duyệt</em> để thoát khỏi hố đen!</p>
+                    </div>
+
+                    <div class="p-4 bg-amber-50/70 rounded-2xl border-l-4 border-amber-500 text-xs sm:text-sm text-amber-950 space-y-1">
+                        <div class="font-bold text-amber-700 uppercase text-[11px]">3. 🎬 Ví dụ cụ thể</div>
+                        <p>Bạn xem video ngắn trên TikTok bị cuốn vào vòng lặp liên tục. Sau 15 phút, bạn chán quá tắt app mở trình duyệt đọc tin tức. Cú "tắt app" chính là 15% dịch chuyển tức thời!</p>
+                    </div>
+
+                    <div class="p-4 bg-emerald-50/70 rounded-2xl border-l-4 border-emerald-500 text-xs sm:text-sm text-emerald-950 space-y-1">
+                        <div class="font-bold text-emerald-700 uppercase text-[11px]">4. 📖 "Bởi vậy báo cáo đã ghi..."</div>
+                        <p>Bởi vậy báo cáo đã minh họa: Khi $d=1.0$, bẫy $\{P_3, P_5\}$ hút sạch $100\%$, Trang chủ $P_1$ bị diệt về $0\%$. Khi có $d=0.85$, Trang chủ $P_1$ được hồi sinh lên đúng phân số $\frac{60}{997} \approx 6.02\%$!</p>
+                    </div>
+                </article>
+
+                <!-- BÀI 9 -->
+                <article id="lesson-9" class="lesson-card bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-sm">09</span>
+                        <h3 class="text-xl font-bold text-slate-900">Định Lý Perron–Frobenius & Thuật Toán Lặp Lũy Thừa</h3>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-slate-400 text-xs sm:text-sm text-slate-700 space-y-1">
+                        <div class="font-bold text-slate-500 uppercase text-[11px]">1. 📌 Khái niệm học thuật trong báo cáo</div>
+                        <p>Ma trận Google $G > 0$ nguyên thủy đảm bảo tồn tại duy nhất trị riêng lớn nhất $\lambda_1 = 1$. Phương pháp lặp lũy thừa $\pi^{(k+1)} = G \pi^{(k)}$ hội tụ với tốc độ hình học: $\|\pi^{(k)} - \pi^*\|_1 \le C \cdot |\lambda_2(G)|^k$.</p>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 rounded-2xl border-l-4 border-blue-500 text-xs sm:text-sm text-blue-950 space-y-1">
+                        <div class="font-bold text-blue-600 uppercase text-[11px]">2. 💡 Giảng giải bình dân (Ai nghe cũng hiểu)</div>
+                        <p>Internet có hàng chục tỷ trang, giải phương trình trực tiếp sẽ làm nổ tung máy tính! Google chỉ làm một việc đơn giản: Cứ mỗi buổi sáng cho nhân ma trận một lần. Vài chục lần nhân là điểm số tự động <strong>đóng băng tĩnh lặng</strong>. Định lý Perron–Frobenius bảo đảm nghiệm này chắc chắn luôn tồn tại và duy nhất!</p>
+                    </div>
+
+                    <div class="p-4 bg-amber-50/70 rounded-2xl border-l-4 border-amber-500 text-xs sm:text-sm text-amber-950 space-y-1">
+                        <div class="font-bold text-amber-700 uppercase text-[11px]">3. 🎬 Ví dụ cụ thể</div>
+                        <p>Đổ nước vào bình thông nhau: Nước sóng sánh lúc đầu nhưng chỉ sau chốc lát sẽ tự động đạt trạng thái cân bằng phẳng lặng!</p>
+                    </div>
+
+                    <div class="p-4 bg-emerald-50/70 rounded-2xl border-l-4 border-emerald-500 text-xs sm:text-sm text-emerald-950 space-y-1">
+                        <div class="font-bold text-emerald-700 uppercase text-[11px]">4. 📖 "Bởi vậy báo cáo đã ghi..."</div>
+                        <p>Bởi vậy báo cáo đã đo được: Ở Ví dụ 1, $|\lambda_2| = 0.465$ nên hội tụ siêu tốc sau 19 bước. Ở Ví dụ 2, $|\lambda_2| = 0.850$ nên cần 75 bước mới đạt độ chính xác $10^{-6}$!</p>
+                    </div>
+                </article>
+
+                <!-- BÀI 10 -->
+                <article id="lesson-10" class="lesson-card bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-sm">10</span>
+                        <h3 class="text-xl font-bold text-slate-900">Phân Tích Chi Tiết Hai Ví Dụ Thực Nghiệm PageRank</h3>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-slate-400 text-xs sm:text-sm text-slate-700 space-y-1">
+                        <div class="font-bold text-slate-500 uppercase text-[11px]">1. 📌 Khái niệm học thuật trong báo cáo</div>
+                        <p>So sánh nghiệm giải tích chính xác từ hệ $(I - G)\pi = 0$ với kết quả lặp lũy thừa sau khi áp dụng điều kiện chuẩn hóa xác suất $\sum \pi_i = 1$.</p>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 rounded-2xl border-l-4 border-blue-500 text-xs sm:text-sm text-blue-950 space-y-1">
+                        <div class="font-bold text-blue-600 uppercase text-[11px]">2. 💡 Giảng giải bình dân (Ai nghe cũng hiểu)</div>
+                        <p>Mạng liên thông mạnh (Ví dụ 1) giống như thành phố có đường sá thông thoáng, không ngõ cụt, ai cũng đi lại tự do. Mạng chứa nút cụt và bẫy (Ví dụ 2) giống như mê cung có bẫy sập, cần phải có "cửa thoát hiểm" (teleportation) mới sống sót!</p>
+                    </div>
+
+                    <div class="p-4 bg-amber-50/70 rounded-2xl border-l-4 border-amber-500 text-xs sm:text-sm text-amber-950 space-y-1">
+                        <div class="font-bold text-amber-700 uppercase text-[11px]">3. 🎬 Ví dụ cụ thể</div>
+                        <p>Ở Ví dụ 1: Điểm PageRank của Trang chủ $A$ là $\frac{215}{584} \approx 36.82\%$. Phương pháp lặp và phương pháp giải tích khớp nhau đến 6 chữ số thập phân!</p>
+                    </div>
+
+                    <div class="p-4 bg-emerald-50/70 rounded-2xl border-l-4 border-emerald-500 text-xs sm:text-sm text-emerald-950 space-y-1">
+                        <div class="font-bold text-emerald-700 uppercase text-[11px]">4. 📖 "Bởi vậy báo cáo đã ghi..."</div>
+                        <p>Bởi vậy báo cáo đã dùng lệnh `rats()` trong MATLAB để đối chiếu: $PR(A) = 215/584$, $PR(P_1) = 60/997$, $PR(P_3) = 15140/36889$ khớp tuyệt đối giữa lý thuyết và thực nghiệm!</p>
+                    </div>
+                </article>
+
+                <!-- BÀI 11 -->
+                <article id="lesson-11" class="lesson-card bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 font-black flex items-center justify-center text-sm">11</span>
+                        <h3 class="text-xl font-bold text-slate-900">So Sánh PageRank Với Thuật Toán HITS (Kleinberg)</h3>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-slate-400 text-xs sm:text-sm text-slate-700 space-y-1">
+                        <div class="font-bold text-slate-500 uppercase text-[11px]">1. 📌 Khái niệm học thuật trong báo cáo</div>
+                        <p>Thuật toán HITS tách mỗi trang thành điểm Authority $x$ và Hub $y$: $x = A^T y, y = A x \implies A^T A x = \lambda x$. Đây chính là bài toán tìm vector kỳ dị chính trong phân tích SVD của ma trận kề $A$.</p>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 rounded-2xl border-l-4 border-blue-500 text-xs sm:text-sm text-blue-950 space-y-1">
+                        <div class="font-bold text-blue-600 uppercase text-[11px]">2. 💡 Giảng giải bình dân (Ai nghe cũng hiểu)</div>
+                        <p>PageRank cho mỗi trang 1 điểm uy tín duy nhất. Jon Kleinberg bảo: Có 2 loại trang web: <strong>Trang Chuyên gia (Authority)</strong> chứa bài viết sâu sắc, và <strong>Trang Danh bạ (Hub)</strong> tổng hợp danh sách link hay. Hai loại này bổ trợ cho nhau!</p>
+                    </div>
+
+                    <div class="p-4 bg-amber-50/70 rounded-2xl border-l-4 border-amber-500 text-xs sm:text-sm text-amber-950 space-y-1">
+                        <div class="font-bold text-amber-700 uppercase text-[11px]">3. 🎬 Ví dụ cụ thể</div>
+                        <p>Giáo sư đầu ngành là Authority (chứa kiến thức uy tín). Bác sĩ gia đình là Hub (biết chỉ bệnh nhân tới đúng vị Giáo sư đầu ngành nào để chữa trị)!</p>
+                    </div>
+
+                    <div class="p-4 bg-emerald-50/70 rounded-2xl border-l-4 border-emerald-500 text-xs sm:text-sm text-emerald-950 space-y-1">
+                        <div class="font-bold text-emerald-700 uppercase text-[11px]">4. 📖 "Bởi vậy báo cáo đã ghi..."</div>
+                        <p>Bởi vậy báo cáo kết luận sợi dây liên kết tuyệt đẹp: PageRank là bài toán Trị riêng Markov, còn HITS chính là bài toán SVD! Cả hai trụ cột của tìm kiếm Web đều bắt nguồn từ Đại số tuyến tính!</p>
+                    </div>
+                </article>
+
+                <!-- BÀI 12 -->
+                <article id="lesson-12" class="lesson-card bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 font-black flex items-center justify-center text-sm">12</span>
+                        <h3 class="text-xl font-bold text-slate-900">Đánh Giá Chất Lượng Web Google (Lighthouse & Core Web Vitals)</h3>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-slate-400 text-xs sm:text-sm text-slate-700 space-y-1">
+                        <div class="font-bold text-slate-500 uppercase text-[11px]">1. 📌 Khái niệm học thuật trong báo cáo</div>
+                        <p>Google PageSpeed Insights kết hợp Dữ liệu thực tế CrUX (Core Web Vitals: LCP $\le 2.5\text{s}$, INP $\le 200\text{ms}$, CLS $\le 0.10$) và Dữ liệu phòng thí nghiệm Lighthouse với công thức: $\text{Score} = 30\% \cdot S_{\text{TBT}} + 25\% \cdot S_{\text{LCP}} + 25\% \cdot S_{\text{CLS}} + 10\% \cdot S_{\text{FCP}} + 10\% \cdot S_{\text{SI}}$.</p>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 rounded-2xl border-l-4 border-blue-500 text-xs sm:text-sm text-blue-950 space-y-1">
+                        <div class="font-bold text-blue-600 uppercase text-[11px]">2. 💡 Giảng giải bình dân (Ai nghe cũng hiểu)</div>
+                        <p>Web có PageRank cao mấy mà load 10 giây mới xong thì ai cũng tắt! Bộ 3 chỉ số vàng: LCP (ảnh chính hiện dưới 2.5s), INP (bấm ngón tay ăn ngay dưới 0.2s), và CLS (nút bấm đứng yên không giật nhảy làm bấm nhầm tiền)!</p>
+                    </div>
+
+                    <div class="p-4 bg-amber-50/70 rounded-2xl border-l-4 border-amber-500 text-xs sm:text-sm text-amber-950 space-y-1">
+                        <div class="font-bold text-amber-700 uppercase text-[11px]">3. 🎬 Ví dụ cụ thể</div>
+                        <p>Bạn vào nhà hàng: món chính bưng ra nhanh (LCP tốt), gọi phục vụ đáp lời ngay (INP tốt), bàn ghế vững chãi không rung đổ canh (CLS tốt) $\to$ Nhà hàng 5 sao!</p>
+                    </div>
+
+                    <div class="p-4 bg-emerald-50/70 rounded-2xl border-l-4 border-emerald-500 text-xs sm:text-sm text-emerald-950 space-y-1">
+                        <div class="font-bold text-emerald-700 uppercase text-[11px]">4. 📖 "Bởi vậy báo cáo đã ghi..."</div>
+                        <p>Bởi vậy báo cáo đã đúc kết 4 lời khuyên: Triệt tiêu nút cụt & bẫy liên kết, kiểm soát liên kết ra $N_j$, nhúng mô hình gợi ý SVD giữ chân khách, và luôn khai báo `width`/`height` cho ảnh để giữ vững CLS $\le 0.10$!</p>
+                    </div>
+                </article>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Sticky Bottom Bar on Mobile to return to source code -->
+    <div class="lg:hidden fixed bottom-4 right-4 z-50">
+        <a href="https://github.com/MinhQuangNguyen321/pagerank-paper" target="_blank" rel="noopener noreferrer"
+           class="inline-flex items-center gap-2 bg-slate-900 text-white font-extrabold text-xs px-4 py-2.5 rounded-full shadow-2xl border border-slate-700">
+            <span>📂</span> Quay về Source Code ↗
+        </a>
+    </div>
+
+    <!-- Interactive Lab JavaScript Engine -->
+    <script>
+        // Mini Tabs inside Lab Section
+        function setLabTab(tab) {
+            ['pagerank', 'svd', 'vitals'].forEach(t => {
+                document.getElementById('lab-content-' + t).classList.add('hidden');
+                document.getElementById('btn-lab-' + t).className = "px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900";
+            });
+            document.getElementById('lab-content-' + tab).classList.remove('hidden');
+            document.getElementById('btn-lab-' + tab).className = "px-3 py-1.5 rounded-lg bg-blue-600 text-white shadow";
+        }
+
+        // PAGERANK LOGIC
+        let chartLab = null;
+        let prState = { ex: 'ex2', d: 0.85, step: 0, pi: [0.2, 0.2, 0.2, 0.2, 0.2], converged: false };
+        const H1 = [[0, 0, 1, 0.5], [1/3, 0, 0, 0], [1/3, 0.5, 0, 0.5], [1/3, 0.5, 0, 0]];
+        const a1 = [0, 0, 0, 0];
+        const H2 = [[0, 1/3, 0, 0, 0], [1/3, 0, 0, 0, 0], [1/3, 1/3, 0, 0, 1], [1/3, 1/3, 0, 0, 0], [0, 0, 1, 0, 0]];
+        const a2 = [0, 0, 0, 1, 0];
+
+        function runLabPageRank() {
+            prState.ex = document.getElementById('lab-pr-select').value;
+            resetLabPR();
+            runAllLabPR();
+        }
+
+        function updateLabD(v) {
+            prState.d = parseFloat(v);
+            document.getElementById('lab-pr-d-text').innerText = prState.d.toFixed(2);
+            resetLabPR();
+            runAllLabPR();
+        }
+
+        function resetLabPR() {
+            const n = (prState.ex === 'ex1') ? 4 : 5;
+            prState.pi = Array(n).fill(1 / n);
+            prState.step = 0;
+            prState.converged = false;
+            updateLabChart();
+        }
+
+        function stepLabPR() {
+            if (prState.converged) return;
+            const n = (prState.ex === 'ex1') ? 4 : 5;
+            const H = (prState.ex === 'ex1') ? H1 : H2;
+            const a = (prState.ex === 'ex1') ? a1 : a2;
+            const d = prState.d;
+
+            const pi_next = Array(n).fill(0);
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    const S_ij = H[i][j] + (1 / n) * a[j];
+                    const G_ij = d * S_ij + (1 - d) / n;
+                    pi_next[i] += G_ij * prState.pi[j];
+                }
+            }
+
+            let err = 0;
+            for (let i = 0; i < n; i++) err += Math.abs(pi_next[i] - prState.pi[i]);
+            prState.pi = pi_next;
+            prState.step++;
+            if (err < 1e-6 || prState.step > 150) prState.converged = true;
+            updateLabChart();
+        }
+
+        function runAllLabPR() {
+            while (!prState.converged && prState.step < 120) stepLabPR();
+        }
+
+        function updateLabChart() {
+            const labels = (prState.ex === 'ex1') 
+                ? ['Trang A', 'Trang B', 'Trang C', 'Trang D']
+                : ['P1 (Home)', 'P2 (Category)', 'P3 (Trap)', 'P4 (PDF)', 'P5 (Trap)'];
+            const data = prState.pi.map(x => (x * 100).toFixed(2));
+
+            if (!chartLab) {
+                const ctx = document.getElementById('chartLabPR').getContext('2d');
+                chartLab = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: ['#3b82f6', '#6366f1', '#ef4444', '#f59e0b', '#10b981'],
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, max: Math.max(50, Math.ceil(Math.max(...data)/10)*10) } }
+                    }
+                });
+            } else {
+                chartLab.data.labels = labels;
+                chartLab.data.datasets[0].data = data;
+                chartLab.options.scales.y.max = Math.max(50, Math.ceil(Math.max(...data)/10)*10);
+                chartLab.update();
+            }
+
+            // Alert logic
+            const alertEl = document.getElementById('lab-pr-alert');
+            if (prState.ex === 'ex2') {
+                if (prState.d >= 0.99) {
+                    alertEl.className = "p-4 rounded-xl text-xs leading-relaxed font-medium bg-red-50 border border-red-200 text-red-900";
+                    alertEl.innerHTML = `<strong>⚠️ HỐ ĐEN HÚT ĐIỂM (d = 1.0):</strong> Bẫy {P3, P5} hút cạn sạch 100% điểm! Trang chủ P1 bị xóa sổ về <strong>0.00%</strong>!`;
+                } else {
+                    alertEl.className = "p-4 rounded-xl text-xs leading-relaxed font-medium bg-green-50 border border-green-200 text-green-900";
+                    alertEl.innerHTML = `<strong>✓ CÂN BẰNG HOÀN HẢO (d = ${prState.d.toFixed(2)}):</strong> Phép Teleportation giải cứu Trang chủ P1 đạt <strong>${(prState.pi[0]*100).toFixed(2)}%</strong> sau ${prState.step} bước lặp!`;
+                }
+            } else {
+                alertEl.className = "p-4 rounded-xl text-xs leading-relaxed font-medium bg-blue-50 border border-blue-200 text-blue-900";
+                alertEl.innerHTML = `<strong>✓ LIÊN THÔNG MẠNH:</strong> Không có bẫy liên kết, Trang chủ A dẫn đầu với <strong>${(prState.pi[0]*100).toFixed(2)}%</strong> sau ${prState.step} bước lặp.`;
+            }
+        }
+
+        // SVD K switch
+        function switchLabK(k) {
+            document.getElementById('lab-k1-btn').className = (k === 1) ? "px-3 py-1 rounded text-xs font-bold bg-purple-600 text-white" : "px-3 py-1 rounded text-xs font-bold text-slate-600";
+            document.getElementById('lab-k2-btn').className = (k === 2) ? "px-3 py-1 rounded text-xs font-bold bg-purple-600 text-white" : "px-3 py-1 rounded text-xs font-bold text-slate-600";
+            document.getElementById('txt-k-val1').innerText = `k=${k}`;
+            document.getElementById('txt-k-val2').innerText = `k=${k}`;
+            document.getElementById('txt-k-val3').innerText = `k=${k}`;
+
+            if (k === 1) {
+                document.getElementById('res-u5-svd').innerText = "3.93 ★";
+                document.getElementById('res-u4-svd').innerText = "2.32 ★";
+                document.getElementById('res-u1-svd').innerText = "2.52 ★";
+            } else {
+                document.getElementById('res-u5-svd').innerText = "3.94 ★";
+                document.getElementById('res-u4-svd').innerText = "2.07 ★";
+                document.getElementById('res-u1-svd').innerText = "3.74 ★";
+            }
+        }
+
+        // Lighthouse calculation
+        function calcLabLighthouse() {
+            const tbt = parseFloat(document.getElementById('lb-tbt').value);
+            const lcp = parseFloat(document.getElementById('lb-lcp').value);
+            const cls = parseFloat(document.getElementById('lb-cls').value);
+
+            document.getElementById('lb-tbt-txt').innerText = `${tbt} ms`;
+            document.getElementById('lb-lcp-txt').innerText = `${lcp.toFixed(1)} s`;
+            document.getElementById('lb-cls-txt').innerText = `${cls.toFixed(2)}`;
+
+            const s_tbt = Math.max(0, Math.min(100, 100 - (tbt / 600) * 80));
+            const s_lcp = Math.max(0, Math.min(100, 100 - (lcp / 4.0) * 70));
+            const s_cls = Math.max(0, Math.min(100, 100 - (cls / 0.25) * 80));
+            const score = Math.round(0.30 * s_tbt + 0.25 * s_lcp + 0.25 * s_cls + 20);
+
+            const numEl = document.getElementById('lb-score-num');
+            const badgeEl = document.getElementById('lb-badge');
+            numEl.innerText = score;
+
+            if (score >= 90) {
+                numEl.className = "text-5xl font-black text-emerald-600 font-mono";
+                badgeEl.className = "inline-block px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700";
+                badgeEl.innerText = "✓ ĐẠT CHUẨN GOOGLE";
+            } else if (score >= 50) {
+                numEl.className = "text-5xl font-black text-amber-500 font-mono";
+                badgeEl.className = "inline-block px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700";
+                badgeEl.innerText = "⚠️ CẦN CẢI THIỆN";
+            } else {
+                numEl.className = "text-5xl font-black text-red-500 font-mono";
+                badgeEl.className = "inline-block px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700";
+                badgeEl.innerText = "✕ KÉM";
+            }
+        }
+
+        window.onload = function() {
+            runLabPageRank();
+            calcLabLighthouse();
+        };
+    </script>
+</body>
+</html>

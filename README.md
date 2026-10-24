@@ -1,3 +1,13 @@
+<div align="center">
+
+# 🌐 TRẢI NGHIỆM BÀI GIẢNG TƯƠNG TÁC TRỰC TUYẾN
+### 👉 [BẤM VÀO ĐÂY ĐỂ VÀO HỌC NGAY TRÊN TRÌNH DUYỆT](https://minhquangnguyen321.github.io/pagerank-paper/) 👈
+
+> 💡 *Trang web bài giảng trực tuyến gồm đầy đủ 12 bài học minh họa, KaTeX hiển thị công thức đẹp mắt, phòng thí nghiệm kéo thanh trượt mô phỏng thuật toán thời gian thực, và **nút bấm [Quay về Source Code]** luôn sẵn sàng ở góc trên cùng!*
+
+---
+</div>
+
 # 📘 GIÁO TRÌNH MINH HỌA TRỰC QUAN: ĐẠI SỐ TUYẾN TÍNH ỨNG DỤNG
 ## Khám phá SVD trong Hệ thống gợi ý & Thuật toán Google PageRank
 

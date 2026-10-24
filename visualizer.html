@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phòng Thí Nghiệm Trực Quan: SVD & Google PageRank</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+    <!-- Top Header -->
+    <header class="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center font-bold text-xl">
+                    📐
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-extrabold tracking-tight">Phòng Thí Nghiệm Trực Quan Đại Số Tuyến Tính</h1>
+                    <p class="text-xs text-blue-200">Đề tài: Phân tích SVD trong Hệ gợi ý & Thuật toán Google PageRank</p>
+                </div>
+            </div>
+            <!-- Navigation Tabs -->
+            <div class="flex bg-slate-900/40 p-1 rounded-xl backdrop-blur border border-white/10">
+                <button onclick="switchTab('pagerank')" id="tab-btn-pagerank" class="px-4 py-2 rounded-lg text-sm font-semibold transition bg-blue-600 text-white shadow">
+                    🌐 Google PageRank
+                </button>
+                <button onclick="switchTab('svd')" id="tab-btn-svd" class="px-4 py-2 rounded-lg text-sm font-semibold transition text-slate-300 hover:text-white">
+                    🎬 SVD Recommender
+                </button>
+                <button onclick="switchTab('vitals')" id="tab-btn-vitals" class="px-4 py-2 rounded-lg text-sm font-semibold transition text-slate-300 hover:text-white">
+                    ⚡ Core Web Vitals
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+
+        <!-- =================================================================== -->
+        <!-- TAB 1: PAGERANK INTERACTIVE SIMULATOR -->
+        <!-- =================================================================== -->
+        <section id="tab-pagerank" class="space-y-6">
+            <!-- Concept Banner -->
+            <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-xl shadow-sm">
+                <h2 class="text-lg font-bold text-blue-900 flex items-center gap-2">
+                    <span>💡</span> Thuật toán Google PageRank: Chuỗi Markov & Dịch chuyển tức thời
+                </h2>
+                <p class="text-sm text-blue-800 mt-1">
+                    Trang web là đỉnh, liên kết là lá phiếu. Hãy thử kéo thanh trượt <strong>Hệ số tắt dần (d)</strong> từ <span class="font-bold text-red-600">1.0</span> về <span class="font-bold text-green-700">0.85</span> tại <strong>Ví dụ 2</strong> để xem phép Teleportation giải cứu Trang chủ $P_1$ khỏi hố đen hút điểm như thế nào!
+                </p>
+            </div>
+
+            <!-- Control Bar -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <!-- Example Selector -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Chọn Mô Hình Mạng Web</label>
+                    <select id="pr-example-select" onchange="initPageRank()" class="w-full bg-slate-100 border border-slate-300 text-slate-800 font-medium rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="ex1">Ví dụ 1: 4 trang liên thông mạnh (A, B, C, D)</option>
+                        <option value="ex2" selected>Ví dụ 2: 5 trang có Nút cụt P4 & Bẫy {P3, P5}</option>
+                    </select>
+                </div>
+
+                <!-- Damping Factor Slider -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Hệ số tắt dần (Damping d)</label>
+                        <span id="pr-d-val" class="font-mono text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">0.85</span>
+                    </div>
+                    <input type="range" id="pr-d-slider" min="0" max="1" step="0.01" value="0.85" oninput="updateDamping(this.value)" class="w-full accent-blue-600 cursor-pointer">
+                    <div class="flex justify-between text-[11px] text-slate-400 mt-1">
+                        <span>d = 0.0 (Nhảy đều)</span>
+                        <span class="font-bold text-blue-600">d = 0.85 (Chuẩn Google)</span>
+                        <span class="text-red-500">d = 1.0 (Dính bẫy)</span>
+                    </div>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="flex items-end gap-2">
+                    <button onclick="runAllSteps()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl shadow transition text-sm flex items-center justify-center gap-1">
+                        <span>▶</span> Lặp đến hội tụ
+                    </button>
+                    <button onclick="stepOnce()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl border border-slate-300 transition text-sm">
+                        Bước lặp (+1)
+                    </button>
+                    <button onclick="resetPageRank()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-3 rounded-xl border border-slate-300 transition text-sm">
+                        ↺
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Bar Chart -->
+                <div class="lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 text-base">Biểu đồ Phân Phối Điểm PageRank (%)</h3>
+                            <span id="pr-status-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                Đã hội tụ
+                            </span>
+                        </div>
+                        <div class="h-72">
+                            <canvas id="pagerankChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Live metrics bar -->
+                    <div class="grid grid-cols-3 gap-4 pt-4 border-t border-slate-100 text-center mt-4">
+                        <div class="bg-slate-50 p-3 rounded-xl">
+                            <div class="text-xs text-slate-400 font-medium">Bước lặp hiện tại</div>
+                            <div id="pr-step-count" class="text-xl font-mono font-bold text-slate-700">0</div>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl">
+                            <div class="text-xs text-slate-400 font-medium">Sai số chuẩn L1</div>
+                            <div id="pr-l1-error" class="text-xl font-mono font-bold text-blue-600">0.000000</div>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl">
+                            <div class="text-xs text-slate-400 font-medium">Trị riêng |λ₂|</div>
+                            <div id="pr-lambda2" class="text-xl font-mono font-bold text-purple-600">0.8500</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis & Explanation Panel -->
+                <div class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                    <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                        <span>🔍</span> Diễn giải Hiện tượng
+                    </h3>
+                    
+                    <div id="pr-explanation-box" class="text-sm space-y-3 text-slate-600 leading-relaxed">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Bảng Điểm Số Từng Trang</div>
+                        <div id="pr-scores-table" class="space-y-1.5 text-xs font-mono">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAB 2: SVD RECOMMENDER SYSTEM LAB -->
+        <!-- =================================================================== -->
+        <section id="tab-svd" class="hidden space-y-6">
+            <!-- Concept Banner -->
+            <div class="bg-purple-50 border-l-4 border-purple-600 p-4 rounded-r-xl shadow-sm">
+                <h2 class="text-lg font-bold text-purple-900 flex items-center gap-2">
+                    <span>🎬</span> Phân tích SVD & FunkSVD trong Hệ thống Gợi ý Phim (5 Users × 5 Items)
+                </h2>
+                <p class="text-sm text-purple-800 mt-1">
+                    Ma trận gốc có 3 ô khuyết: $(U_5, I_3)$, $(U_4, I_2)$ và $(U_1, I_5)$. Kéo số chiều ẩn $k$ để xem định lý Eckart–Young khử nhiễu và so sánh với mô hình FunkSVD (học máy SGD).
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left: Matrix Table & Controls -->
+                <div class="lg:col-span-7 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-slate-800 text-base">Ma Trận Đánh Giá Phim (1–5 sao)</h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-500 font-medium">Số chủ đề ẩn (k):</span>
+                            <div class="inline-flex rounded-lg border border-slate-200 p-1 bg-slate-50">
+                                <button onclick="setSvdK(1)" id="k-btn-1" class="px-3 py-1 rounded text-xs font-bold bg-purple-600 text-white">k = 1</button>
+                                <button onclick="setSvdK(2)" id="k-btn-2" class="px-3 py-1 rounded text-xs font-bold text-slate-600 hover:text-black">k = 2</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Matrix Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-center text-sm border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 text-xs">
+                                    <th class="p-2.5 text-left rounded-l-lg">Người dùng</th>
+                                    <th class="p-2.5 bg-blue-50 text-blue-900">I₁ (Sci-Fi)</th>
+                                    <th class="p-2.5 bg-blue-50 text-blue-900">I₂ (Sci-Fi)</th>
+                                    <th class="p-2.5 bg-blue-50 text-blue-900">I₃ (Sci-Fi)</th>
+                                    <th class="p-2.5 bg-rose-50 text-rose-900">I₄ (Drama)</th>
+                                    <th class="p-2.5 bg-rose-50 text-rose-900 rounded-r-lg">I₅ (Drama)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 font-mono text-xs">
+                                <tr>
+                                    <td class="p-2.5 text-left font-bold font-sans text-slate-700">U₁ (Thích Sci-Fi)</td>
+                                    <td class="p-2.5">5.0</td>
+                                    <td class="p-2.5">4.0</td>
+                                    <td class="p-2.5">5.0</td>
+                                    <td class="p-2.5">1.0</td>
+                                    <td class="p-2.5 bg-amber-50 font-bold text-amber-700 border border-amber-300 rounded">? (Khuyết)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 text-left font-bold font-sans text-slate-700">U₂ (Thích Sci-Fi)</td>
+                                    <td class="p-2.5">4.0</td>
+                                    <td class="p-2.5">5.0</td>
+                                    <td class="p-2.5">4.0</td>
+                                    <td class="p-2.5">2.0</td>
+                                    <td class="p-2.5">1.0</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 text-left font-bold font-sans text-slate-700">U₃ (Thích Drama)</td>
+                                    <td class="p-2.5">1.0</td>
+                                    <td class="p-2.5">2.0</td>
+                                    <td class="p-2.5">1.0</td>
+                                    <td class="p-2.5">5.0</td>
+                                    <td class="p-2.5">4.0</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 text-left font-bold font-sans text-slate-700">U₄ (Thích Drama)</td>
+                                    <td class="p-2.5">1.0</td>
+                                    <td class="p-2.5 bg-amber-50 font-bold text-amber-700 border border-amber-300 rounded">? (Khuyết)</td>
+                                    <td class="p-2.5">2.0</td>
+                                    <td class="p-2.5">4.0</td>
+                                    <td class="p-2.5">5.0</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 text-left font-bold font-sans text-slate-700">U₅ (Thích Sci-Fi)</td>
+                                    <td class="p-2.5">5.0</td>
+                                    <td class="p-2.5">4.0</td>
+                                    <td class="p-2.5 bg-amber-50 font-bold text-amber-700 border border-amber-300 rounded">? (Khuyết)</td>
+                                    <td class="p-2.5">1.0</td>
+                                    <td class="p-2.5">2.0</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Energy distribution bar -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs text-slate-500 font-medium">
+                            <span>Phổ năng lượng Frobenius SVD:</span>
+                            <span class="font-bold text-purple-700">σ₁ = 82.79% | σ₂ = 10.07% | Tổng k=2: 92.86%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden flex">
+                            <div class="bg-purple-600 h-full" style="width: 82.79%" title="σ₁: 82.79%"></div>
+                            <div class="bg-indigo-500 h-full" style="width: 10.07%" title="σ₂: 10.07%"></div>
+                            <div class="bg-blue-400 h-full" style="width: 4.14%" title="σ₃: 4.14%"></div>
+                            <div class="bg-slate-300 h-full" style="width: 3.00%" title="σ₄ & σ₅"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Prediction Decision Cards -->
+                <div class="lg:col-span-5 space-y-4">
+                    <!-- Card 1: U5 - I3 -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-sm text-slate-800">Cặp (U₅, I₃) [Sci-Fi]</span>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-green-100 text-green-700">🟢 GỢI Ý NGAY</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-3">Người dùng U₅ là tín đồ Sci-Fi. Bộ phim I₃ là phim bom tấn Sci-Fi.</p>
+                        <div class="grid grid-cols-3 gap-2 text-center text-xs font-mono">
+                            <div class="bg-slate-50 p-2 rounded-lg">
+                                <div class="text-[10px] text-slate-400 font-sans">Điền khuyết</div>
+                                <div class="font-bold text-slate-600">3.00 ★</div>
+                            </div>
+                            <div class="bg-purple-50 p-2 rounded-lg">
+                                <div class="text-[10px] text-purple-600 font-sans" id="card-u5-svd-title">SVD (k=1)</div>
+                                <div class="font-bold text-purple-700" id="card-u5-svd-val">3.93 ★</div>
+                            </div>
+                            <div class="bg-indigo-50 p-2 rounded-lg">
+                                <div class="text-[10px] text-indigo-600 font-sans">FunkSVD</div>
+                                <div class="font-bold text-indigo-700">5.16 ★</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: U4 - I2 -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-sm text-slate-800">Cặp (U₄, I₂) [Sci-Fi]</span>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-red-100 text-red-700">🔴 KHÔNG GỢI Ý</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-3">U₄ là tín đồ phim tình cảm Drama, không thích phim hành động Sci-Fi.</p>
+                        <div class="grid grid-cols-3 gap-2 text-center text-xs font-mono">
+                            <div class="bg-slate-50 p-2 rounded-lg">
+                                <div class="text-[10px] text-slate-400 font-sans">Điền khuyết</div>
+                                <div class="font-bold text-slate-600">3.00 ★</div>
+                            </div>
+                            <div class="bg-purple-50 p-2 rounded-lg">
+                                <div class="text-[10px] text-purple-600 font-sans" id="card-u4-svd-title">SVD (k=1)</div>
+                                <div class="font-bold text-purple-700" id="card-u4-svd-val">2.32 ★</div>
+                            </div>
+                            <div class="bg-indigo-50 p-2 rounded-lg">
+                                <div class="text-[10px] text-indigo-600 font-sans">FunkSVD</div>
+                                <div class="font-bold text-indigo-700">0.66 ★</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: U1 - I5 -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-sm text-slate-800">Cặp (U₁, I₅) [Drama]</span>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-red-100 text-red-700">🔴 KHÔNG GỢI Ý</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-3">U₁ ghét phim Drama. FunkSVD loại trừ nhiễu đoán chuẩn xác 1.90 sao.</p>
+                        <div class="grid grid-cols-3 gap-2 text-center text-xs font-mono">
+                            <div class="bg-slate-50 p-2 rounded-lg">
+                                <div class="text-[10px] text-slate-400 font-sans">Điền khuyết</div>
+                                <div class="font-bold text-slate-600">3.75 ★</div>
+                            </div>
+                            <div class="bg-purple-50 p-2 rounded-lg">
+                                <div class="text-[10px] text-purple-600 font-sans" id="card-u1-svd-title">SVD (k=1)</div>
+                                <div class="font-bold text-purple-700" id="card-u1-svd-val">2.52 ★</div>
+                            </div>
+                            <div class="bg-indigo-50 p-2 rounded-lg">
+                                <div class="text-[10px] text-indigo-600 font-sans">FunkSVD</div>
+                                <div class="font-bold text-indigo-700">1.90 ★</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAB 3: CORE WEB VITALS & LIGHTHOUSE CALCULATOR -->
+        <!-- =================================================================== -->
+        <section id="tab-vitals" class="hidden space-y-6">
+            <!-- Concept Banner -->
+            <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-xl shadow-sm">
+                <h2 class="text-lg font-bold text-emerald-900 flex items-center gap-2">
+                    <span>⚡</span> Máy Tính Điểm Hiệu Năng Google Lighthouse (v10–v13) & Core Web Vitals
+                </h2>
+                <p class="text-sm text-emerald-800 mt-1">
+                    Điểm hiệu năng được tính theo công thức: 
+                    <code>Score = 30%·TBT + 25%·LCP + 25%·CLS + 10%·FCP + 10%·SI</code>.
+                    Hãy thử điều chỉnh các thanh trượt bên dưới để xem điểm số thay đổi thời gian thực!
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Sliders Controls -->
+                <div class="lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+                    <h3 class="font-bold text-slate-800 text-base">Thông Số Đo Lường Kỹ Thuật (Mobile)</h3>
+
+                    <!-- TBT Slider (30%) -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center text-sm font-semibold">
+                            <span class="text-slate-700">Total Blocking Time (TBT) <span class="text-xs text-purple-600 font-normal">[Trọng số 30%]</span></span>
+                            <span id="val-tbt" class="font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">150 ms</span>
+                        </div>
+                        <input type="range" id="slider-tbt" min="0" max="1000" step="10" value="150" oninput="calcLighthouse()" class="w-full accent-emerald-600">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span class="text-green-600">≤ 200 ms (Tốt)</span>
+                            <span class="text-amber-500">200 - 600 ms (Cần cải thiện)</span>
+                            <span class="text-red-500">> 600 ms (Kém)</span>
+                        </div>
+                    </div>
+
+                    <!-- LCP Slider (25%) -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center text-sm font-semibold">
+                            <span class="text-slate-700">Largest Contentful Paint (LCP) <span class="text-xs text-purple-600 font-normal">[Trọng số 25%]</span></span>
+                            <span id="val-lcp" class="font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">2.0 s</span>
+                        </div>
+                        <input type="range" id="slider-lcp" min="0.5" max="8" step="0.1" value="2.0" oninput="calcLighthouse()" class="w-full accent-emerald-600">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span class="text-green-600">≤ 2.5 s (Tốt)</span>
+                            <span class="text-amber-500">2.5 - 4.0 s (Cần cải thiện)</span>
+                            <span class="text-red-500">> 4.0 s (Kém)</span>
+                        </div>
+                    </div>
+
+                    <!-- CLS Slider (25%) -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center text-sm font-semibold">
+                            <span class="text-slate-700">Cumulative Layout Shift (CLS) <span class="text-xs text-purple-600 font-normal">[Trọng số 25%]</span></span>
+                            <span id="val-cls" class="font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">0.05</span>
+                        </div>
+                        <input type="range" id="slider-cls" min="0" max="0.6" step="0.01" value="0.05" oninput="calcLighthouse()" class="w-full accent-emerald-600">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span class="text-green-600">≤ 0.10 (Tốt)</span>
+                            <span class="text-amber-500">0.10 - 0.25 (Cần cải thiện)</span>
+                            <span class="text-red-500">> 0.25 (Kém)</span>
+                        </div>
+                    </div>
+
+                    <!-- FCP Slider (10%) -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center text-sm font-semibold">
+                            <span class="text-slate-700">First Contentful Paint (FCP) <span class="text-xs text-purple-600 font-normal">[Trọng số 10%]</span></span>
+                            <span id="val-fcp" class="font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">1.2 s</span>
+                        </div>
+                        <input type="range" id="slider-fcp" min="0.5" max="5" step="0.1" value="1.2" oninput="calcLighthouse()" class="w-full accent-emerald-600">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span class="text-green-600">≤ 1.8 s (Tốt)</span>
+                            <span class="text-amber-500">1.8 - 3.0 s</span>
+                            <span class="text-red-500">> 3.0 s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Score Dashboard -->
+                <div class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center justify-between text-center">
+                    <h3 class="font-bold text-slate-800 text-base">Điểm Hiệu Năng Tổng Hợp</h3>
+
+                    <!-- Score Ring -->
+                    <div class="relative w-44 h-44 my-4 flex items-center justify-center">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="40" stroke="#f1f5f9" stroke-width="8" fill="transparent"/>
+                            <circle id="score-ring" cx="50" cy="50" r="40" stroke="#10b981" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="20" stroke-linecap="round" fill="transparent" class="transition-all duration-500"/>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span id="score-number" class="text-5xl font-black text-emerald-600 tracking-tight">92</span>
+                            <span id="score-label" class="text-xs font-bold uppercase tracking-wider text-emerald-700 mt-1">Xuất Sắc</span>
+                        </div>
+                    </div>
+
+                    <!-- Core Web Vitals Status Badge -->
+                    <div class="w-full p-4 rounded-xl border bg-slate-50 space-y-2">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Đánh Giá Core Web Vitals</div>
+                        <div id="vitals-status-badge" class="py-1.5 px-3 rounded-lg text-sm font-extrabold bg-green-100 text-green-700">
+                            ✓ ĐẠT CHUẨN GOOGLE
+                        </div>
+                        <p class="text-[11px] text-slate-500">Trang web đạt chuẩn sẽ được Google ưu tiên xếp hạng cao hơn trên kết quả tìm kiếm!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-16 py-6 border-t border-slate-200 text-center text-xs text-slate-400">
+        Bài tập lớn Đại số Tuyến tính • Trường Đại học Bách Khoa – ĐHQG TP. Hồ Chí Minh
+    </footer>
+
+    <!-- =================================================================== -->
+    <!-- JAVASCRIPT LOGIC -->
+    <!-- =================================================================== -->
+    <script>
+        // Tab switching
+        function switchTab(tabId) {
+            ['pagerank', 'svd', 'vitals'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+                const btn = document.getElementById('tab-btn-' + t);
+                btn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition text-slate-300 hover:text-white";
+            });
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('tab-btn-' + tabId);
+            activeBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition bg-blue-600 text-white shadow";
+        }
+
+        // =====================================================================
+        // PAGERANK ENGINE
+        // =====================================================================
+        let prChartInstance = null;
+        let prState = {
+            example: 'ex2',
+            d: 0.85,
+            n: 5,
+            labels: [],
+            H: [],
+            a: [],
+            pi: [],
+            step: 0,
+            err: 0,
+            converged: false
+        };
+
+        const EX1_DATA = {
+            labels: ['Trang A', 'Trang B', 'Trang C', 'Trang D'],
+            H: [
+                [0,   0,   1, 0.5],
+                [1/3, 0,   0, 0],
+                [1/3, 0.5, 0, 0.5],
+                [1/3, 0.5, 0, 0]
+            ],
+            a: [0, 0, 0, 0]
+        };
+
+        const EX2_DATA = {
+            labels: ['P1 (Home)', 'P2 (Category)', 'P3 (Spider Trap)', 'P4 (PDF cụt)', 'P5 (Spider Trap)'],
+            H: [
+                [0,   1/3, 0, 0, 0],
+                [1/3, 0,   0, 0, 0],
+                [1/3, 1/3, 0, 0, 1],
+                [1/3, 1/3, 0, 0, 0],
+                [0,   0,   1, 0, 0]
+            ],
+            a: [0, 0, 0, 1, 0]
+        };
+
+        function initPageRank() {
+            const exType = document.getElementById('pr-example-select').value;
+            prState.example = exType;
+            const data = (exType === 'ex1') ? EX1_DATA : EX2_DATA;
+            prState.labels = data.labels;
+            prState.n = data.labels.length;
+            prState.H = data.H;
+            prState.a = data.a;
+            resetPageRank();
+        }
+
+        function updateDamping(val) {
+            prState.d = parseFloat(val);
+            document.getElementById('pr-d-val').innerText = prState.d.toFixed(2);
+            resetPageRank();
+            runAllSteps();
+        }
+
+        function resetPageRank() {
+            prState.step = 0;
+            prState.err = 1.0;
+            prState.converged = false;
+            prState.pi = Array(prState.n).fill(1 / prState.n);
+            updateUI();
+        }
+
+        function getGoogleMatrix() {
+            const n = prState.n;
+            const d = prState.d;
+            const G = [];
+            for (let i = 0; i < n; i++) {
+                G[i] = [];
+                for (let j = 0; j < n; j++) {
+                    const S_ij = prState.H[i][j] + (1 / n) * prState.a[j];
+                    G[i][j] = d * S_ij + (1 - d) / n;
+                }
+            }
+            return G;
+        }
+
+        function stepOnce() {
+            if (prState.converged) return;
+            const G = getGoogleMatrix();
+            const n = prState.n;
+            const pi_next = Array(n).fill(0);
+
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    pi_next[i] += G[i][j] * prState.pi[j];
+                }
+            }
+
+            let l1 = 0;
+            for (let i = 0; i < n; i++) {
+                l1 += Math.abs(pi_next[i] - prState.pi[i]);
+            }
+
+            prState.pi = pi_next;
+            prState.step += 1;
+            prState.err = l1;
+            if (l1 < 1e-6 || prState.step >= 200) {
+                prState.converged = true;
+            }
+            updateUI();
+        }
+
+        function runAllSteps() {
+            while (!prState.converged && prState.step < 150) {
+                stepOnce();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('pr-step-count').innerText = prState.step;
+            document.getElementById('pr-l1-error').innerText = prState.err.toFixed(6);
+            
+            // Lambda 2 display
+            const lam2 = (prState.example === 'ex1') ? (0.4647 * prState.d / 0.85).toFixed(4) : (prState.d).toFixed(4);
+            document.getElementById('pr-lambda2').innerText = lam2;
+
+            const badge = document.getElementById('pr-status-badge');
+            if (prState.converged) {
+                badge.innerText = `Đã hội tụ sau ${prState.step} bước`;
+                badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800";
+            } else {
+                badge.innerText = `Đang lặp (Bước ${prState.step})`;
+                badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800";
+            }
+
+            // Update Chart
+            const scoresPct = prState.pi.map(p => (p * 100).toFixed(2));
+            if (!prChartInstance) {
+                const ctx = document.getElementById('pagerankChart').getContext('2d');
+                prChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: prState.labels,
+                        datasets: [{
+                            label: 'Điểm PageRank (%)',
+                            data: scoresPct,
+                            backgroundColor: ['#3b82f6', '#6366f1', '#ef4444', '#f59e0b', '#ec4899'],
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, max: Math.max(60, Math.ceil(Math.max(...scoresPct) / 10) * 10) }
+                        }
+                    }
+                });
+            } else {
+                prChartInstance.data.labels = prState.labels;
+                prChartInstance.data.datasets[0].data = scoresPct;
+                prChartInstance.options.scales.y.max = Math.max(60, Math.ceil(Math.max(...scoresPct) / 10) * 10);
+                prChartInstance.update();
+            }
+
+            // Update Table
+            let tableHtml = '';
+            for (let i = 0; i < prState.n; i++) {
+                tableHtml += `<div class="flex justify-between items-center py-1 border-b border-slate-100">
+                    <span class="text-slate-600 font-sans">${prState.labels[i]}</span>
+                    <span class="font-bold text-slate-800">${(prState.pi[i] * 100).toFixed(2)}%</span>
+                </div>`;
+            }
+            document.getElementById('pr-scores-table').innerHTML = tableHtml;
+
+            // Update Explanations
+            const expBox = document.getElementById('pr-explanation-box');
+            if (prState.example === 'ex2') {
+                if (prState.d >= 0.99) {
+                    expBox.innerHTML = `
+                        <div class="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs">
+                            <span class="font-bold">⚠️ HỐ ĐEN HÚT ĐIỂM:</span> Vì d = 1.0 (không có Teleportation), cụm bẫy liên kết {P3, P5} hút sạch 100% điểm của toàn bộ website! Điểm của Trang chủ P1 và Danh mục P2 bị xóa sổ hoàn toàn về <strong>0.00%</strong>.
+                        </div>
+                    `;
+                } else if (prState.d === 0.85) {
+                    expBox.innerHTML = `
+                        <div class="p-3 bg-green-50 border border-green-200 rounded-xl text-green-800 text-xs">
+                            <span class="font-bold">✓ CÂN BẰNG HOÀN HẢO:</span> Với d = 0.85 chuẩn Google, 15% xác suất nhảy ngẫu nhiên đã giải cứu Trang chủ P1 đạt <strong>6.02%</strong> và P4 đạt <strong>7.72%</strong>. Cụm bẫy {P3, P5} vẫn đứng đầu nhưng không thể thao túng hệ thống!
+                        </div>
+                    `;
+                } else {
+                    expBox.innerHTML = `
+                        <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-800 text-xs">
+                            <span class="font-bold">ℹ️ THAY ĐỔI DAMPING FACTOR:</span> Khi d giảm xuống ${prState.d.toFixed(2)}, xác suất nhảy ngẫu nhiên tăng lên (${((1 - prState.d)*100).toFixed(0)}%), điểm số giữa các trang ngày càng phân phối đều nhau hơn.
+                        </div>
+                    `;
+                }
+            } else {
+                expBox.innerHTML = `
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-800 text-xs">
+                        <span class="font-bold">✓ LIÊN THÔNG MẠNH:</span> Mạng 4 trang có cấu trúc liên thông hoàn hảo, không có nút cụt. Trang chủ A dẫn đầu với <strong>36.82%</strong> vì nhận được dòng link uy tín từ cả C và D.
+                    </div>
+                `;
+            }
+        }
+
+        // =====================================================================
+        // SVD RECOMMENDER ENGINE
+        // =====================================================================
+        function setSvdK(k) {
+            document.getElementById('k-btn-1').className = (k === 1) 
+                ? "px-3 py-1 rounded text-xs font-bold bg-purple-600 text-white" 
+                : "px-3 py-1 rounded text-xs font-bold text-slate-600 hover:text-black";
+            document.getElementById('k-btn-2').className = (k === 2) 
+                ? "px-3 py-1 rounded text-xs font-bold bg-purple-600 text-white" 
+                : "px-3 py-1 rounded text-xs font-bold text-slate-600 hover:text-black";
+
+            if (k === 1) {
+                document.getElementById('card-u5-svd-title').innerText = "SVD (k=1)";
+                document.getElementById('card-u5-svd-val').innerText = "3.93 ★";
+                document.getElementById('card-u4-svd-title').innerText = "SVD (k=1)";
+                document.getElementById('card-u4-svd-val').innerText = "2.32 ★";
+                document.getElementById('card-u1-svd-title').innerText = "SVD (k=1)";
+                document.getElementById('card-u1-svd-val').innerText = "2.52 ★";
+            } else {
+                document.getElementById('card-u5-svd-title').innerText = "SVD (k=2)";
+                document.getElementById('card-u5-svd-val').innerText = "3.94 ★";
+                document.getElementById('card-u4-svd-title').innerText = "SVD (k=2)";
+                document.getElementById('card-u4-svd-val').innerText = "2.07 ★";
+                document.getElementById('card-u1-svd-title').innerText = "SVD (k=2)";
+                document.getElementById('card-u1-svd-val').innerText = "3.74 ★";
+            }
+        }
+
+        // =====================================================================
+        // LIGHTHOUSE CALCULATOR ENGINE
+        // =====================================================================
+        function calcLighthouse() {
+            const tbt = parseFloat(document.getElementById('slider-tbt').value);
+            const lcp = parseFloat(document.getElementById('slider-lcp').value);
+            const cls = parseFloat(document.getElementById('slider-cls').value);
+            const fcp = parseFloat(document.getElementById('slider-fcp').value);
+
+            document.getElementById('val-tbt').innerText = `${tbt} ms`;
+            document.getElementById('val-lcp').innerText = `${lcp.toFixed(1)} s`;
+            document.getElementById('val-cls').innerText = `${cls.toFixed(2)}`;
+            document.getElementById('val-fcp').innerText = `${fcp.toFixed(1)} s`;
+
+            // Score transforms (simplified log-normal approximation for demo)
+            const s_tbt = Math.max(0, Math.min(100, 100 - (tbt / 600) * 80));
+            const s_lcp = Math.max(0, Math.min(100, 100 - (lcp / 4.0) * 70));
+            const s_cls = Math.max(0, Math.min(100, 100 - (cls / 0.25) * 80));
+            const s_fcp = Math.max(0, Math.min(100, 100 - (fcp / 3.0) * 70));
+            const s_si = 85;
+
+            const score = Math.round(0.30 * s_tbt + 0.25 * s_lcp + 0.25 * s_cls + 0.10 * s_fcp + 0.10 * s_si);
+            
+            document.getElementById('score-number').innerText = score;
+            
+            const ring = document.getElementById('score-ring');
+            const circumference = 251.2;
+            const offset = circumference - (score / 100) * circumference;
+            ring.style.strokeDashoffset = offset;
+
+            const numEl = document.getElementById('score-number');
+            const labelEl = document.getElementById('score-label');
+            const badgeEl = document.getElementById('vitals-status-badge');
+
+            if (score >= 90) {
+                ring.setAttribute('stroke', '#10b981');
+                numEl.className = "text-5xl font-black text-emerald-600 tracking-tight";
+                labelEl.innerText = "Xuất Sắc (Xanh lá)";
+                labelEl.className = "text-xs font-bold uppercase tracking-wider text-emerald-700 mt-1";
+            } else if (score >= 50) {
+                ring.setAttribute('stroke', '#f59e0b');
+                numEl.className = "text-5xl font-black text-amber-500 tracking-tight";
+                labelEl.innerText = "Cần Cải Thiện (Cam)";
+                labelEl.className = "text-xs font-bold uppercase tracking-wider text-amber-600 mt-1";
+            } else {
+                ring.setAttribute('stroke', '#ef4444');
+                numEl.className = "text-5xl font-black text-red-500 tracking-tight";
+                labelEl.innerText = "Kém (Đỏ)";
+                labelEl.className = "text-xs font-bold uppercase tracking-wider text-red-600 mt-1";
+            }
+
+            // Core Web Vitals Pass condition
+            if (lcp <= 2.5 && cls <= 0.10 && tbt <= 300) {
+                badgeEl.innerText = "✓ ĐẠT CHUẨN GOOGLE";
+                badgeEl.className = "py-1.5 px-3 rounded-lg text-sm font-extrabold bg-green-100 text-green-700";
+            } else {
+                badgeEl.innerText = "✕ KHÔNG ĐẠT CORE WEB VITALS";
+                badgeEl.className = "py-1.5 px-3 rounded-lg text-sm font-extrabold bg-red-100 text-red-700";
+            }
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            initPageRank();
+            runAllSteps();
+            calcLighthouse();
+        };
+    </script>
+</body>
+</html>
